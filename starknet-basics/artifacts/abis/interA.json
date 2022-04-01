@@ -1,0 +1,40 @@
+[
+    {
+        "inputs": [
+            {
+                "name": "_b_address",
+                "type": "felt"
+            },
+            {
+                "name": "_a_value",
+                "type": "felt"
+            }
+        ],
+        "name": "constructor",
+        "outputs": [],
+        "type": "constructor"
+    },
+    {
+        "inputs": [],
+        "name": "read_b",
+        "outputs": [
+            {
+                "name": "b_value",
+                "type": "felt"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "name": "incr_amt",
+                "type": "felt"
+            }
+        ],
+        "name": "write_b",
+        "outputs": [],
+        "type": "function"
+    }
+]

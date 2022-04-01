@@ -1,0 +1,4 @@
+0x07412a162d6c299af8bff0464b4283e1eccbeb43c6190dd94eb73f7d1b2f5c2c:artifacts/abis/contract.json:first_app
+0x0066c460a00e37bc1cd1919793760141c2640ad7595a710f333cfb34947495bb:/home/zet/dev/cairo/cairo_venv/lib/python3.7/site-packages/nile/artifacts/abis/Account.json:account-0
+0x068ab19228483d391802eb38ce16743d6e2bcad20fb1b81d42e06c7fa538da50:artifacts/abis/arrays.json:arrays
+0x05bd228d653fe0883599cc2d3b3618bf2cca97fbb5dd147ee02519eb9f0fef5f:artifacts/abis/variables.json:vars

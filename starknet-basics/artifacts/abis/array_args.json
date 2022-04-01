@@ -1,0 +1,34 @@
+[
+    {
+        "inputs": [
+            {
+                "name": "key",
+                "type": "felt"
+            }
+        ],
+        "name": "read",
+        "outputs": [
+            {
+                "name": "value",
+                "type": "felt"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "name": "assign_arr_len",
+                "type": "felt"
+            },
+            {
+                "name": "assign_arr",
+                "type": "felt*"
+            }
+        ],
+        "name": "assign",
+        "outputs": [],
+        "type": "function"
+    }
+]

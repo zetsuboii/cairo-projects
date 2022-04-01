@@ -1,0 +1,59 @@
+[
+    {
+        "inputs": [
+            {
+                "name": "_b_value",
+                "type": "felt"
+            }
+        ],
+        "name": "constructor",
+        "outputs": [],
+        "type": "constructor"
+    },
+    {
+        "inputs": [],
+        "name": "read_value",
+        "outputs": [
+            {
+                "name": "value",
+                "type": "felt"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "read_a",
+        "outputs": [
+            {
+                "name": "a",
+                "type": "felt"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "name": "new_a",
+                "type": "felt"
+            }
+        ],
+        "name": "set_a",
+        "outputs": [],
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "name": "n",
+                "type": "felt"
+            }
+        ],
+        "name": "increment",
+        "outputs": [],
+        "type": "function"
+    }
+]
