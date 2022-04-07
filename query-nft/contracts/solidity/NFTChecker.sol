@@ -23,29 +23,38 @@ interface IERC721Read {
 
 /// @notice L1 counter-part of the Cairo contract that reads a token's data
 contract NFTChecker {
+  error OwnerDoesntMatch();
+
   IStarknetCore starknetCore;
-  
   // Function IDs (optional) used while receiving
   uint256 constant PROVE_NFT_OWNERSHIP = 0;
   // Selectors used while sending
   uint256 constant SET_OWNER_OF_SELECTOR = 
   1360114337191064846240331428331736981605565427608539543753235946271679306594;
 
-  constructor(IStarknetCore starknetCore_) {
-    starknetCore = starknetCore_;
+  constructor() {
+    starknetCore = IStarknetCore(0xde29d060D45901Fb19ED6C6e959EB22d8626708e);
   }
 
   function proveNFTOwnership(
+    // L2 address of contract
     uint256 l2ContractAddress,
+    // L2 address of user
+    uint256 l2UserAddress,
+    // NFT Contract details
     address nftAddress,
     uint256 nftId,
+    // L1 address of user, sent from L2 contract
     address ownerAddress
   ) external {
+    if (ownerAddress != msg.sender) revert OwnerDoesntMatch();
+
     uint256[] memory rcvPayload = new uint256[](4);
     rcvPayload[0] = PROVE_NFT_OWNERSHIP;
     rcvPayload[1] = uint256(uint160(nftAddress));
     rcvPayload[2] = nftId;
-    rcvPayload[3] = uint256(uint160(ownerAddress));
+    rcvPayload[3] = l2UserAddress;
+    rcvPayload[4] = uint256(uint160(ownerAddress));
 
     // Search for and consume the msg from L2
     starknetCore.consumeMessageFromL2(
@@ -61,7 +70,7 @@ contract NFTChecker {
     uint256[] memory sendPayload = new uint256[](4);
     sendPayload[1] = uint256(uint160(nftAddress));
     sendPayload[2] = nftId;
-    sendPayload[3] = uint256(uint160(ownerAddress));
+    sendPayload[3] = l2UserAddress;
     sendPayload[4] = isOwner ? 1 : 0;
 
     // Send msg to L2

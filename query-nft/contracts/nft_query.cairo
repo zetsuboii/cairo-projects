@@ -122,7 +122,10 @@ func query_nft_ownership{
     syscall_ptr: felt*,
     pedersen_ptr: HashBuiltin*,
     range_check_ptr
-}(nft_id: felt):
+}(
+    l1_address: felt,
+    nft_id: felt
+):
     alloc_locals
     # Assert NFT ID is not negative
     assert_nn(nft_id)
@@ -135,10 +138,11 @@ func query_nft_ownership{
     assert send_payload[1] = nft_addr
     assert send_payload[2] = nft_id
     assert send_payload[3] = caller
+    assert send_payload[4] = l1_address
 
     send_message_to_l1(
         to_address=L1_ADDRESS,
-        payload_size=4,
+        payload_size=5,
         payload=send_payload
     )
 
