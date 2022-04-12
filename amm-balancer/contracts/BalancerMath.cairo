@@ -28,14 +28,8 @@ func bfloor {range_check_ptr} (a: Uint256) -> (b: Uint256):
     let (local base) = bbase()
 
     # Currently only taking the top
-    let (low: Uint256, high: Uint256) = uint256_mul(down_scaled, base)
-
-    with_attr error_msg("Overflow on bfloor"):
-        assert_not_zero(high.low)
-        assert_not_zero(high.high)
-    end
-
-    return(b=low)
+    let (local result: Uint256) = bmul(down_scaled, base)
+    return(b=result)
 end
 
 # Adds a to b, reverts if there's an overflow
@@ -75,6 +69,17 @@ func bsub_sign {range_check_ptr} (
         let (local result: Uint256) = uint256_sub(b,a)
         return (r=result, flag=1)
     end 
+end
+
+func bmul {range_check_ptr} (a: Uint256, b: Uint256) -> (r: Uint256):
+    let (low: Uint256, high: Uint256) = uint256_mul(a, b)
+
+    with_attr error_msg("Overflow on bmul"):
+        assert_not_zero(high.low)
+        assert_not_zero(high.high)
+    end
+
+    return(r=low)
 end
 
 
