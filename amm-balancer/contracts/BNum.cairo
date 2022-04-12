@@ -29,6 +29,19 @@ namespace BNum:
         return (Uint256(10**18, 0))
     end
 
+    func MIN_BPOW_BASE() -> (r: Uint256):
+        return Uint256(1, 0)
+    end
+
+    func MAX_BPOW_BASE() -> (r: Uint256):
+        let (twobone: Uint256) = uint256_mul((b_one()), Uint256(2,0))
+        return uint256_sub(twobone, 1)
+    end
+
+    func BPOW_PRECISION() -> ():
+        return Uint256(10**8, 0)
+    end
+
     # Converts BNum to Uint256
     func toi {range_check_ptr} (a: Uint256) -> (b: Uint256):
         alloc_locals
@@ -228,6 +241,38 @@ namespace BNum:
                 x=x,
                 xneg=xneg) 
         end
+    end
+
+    # Takes 
+    func pow {range_check_ptr} (base: Uint256, exp: Uint256) -> (r: Uint256):
+        alloc_locals
+
+        let (base_too_low) = uint256_lt(base, (MIN_BPOW_BASE()))
+        with_attr error_msg("bpow base is too low"):
+            assert base_too_low = 0
+        end
+        
+        let (base_too_high) = uint256_lt((MAX_BPOW_BASE()), base)
+        with_attr error_msg("bpow base is too high"):
+            assert base_too_high = 0
+        end
+
+        let (local whole: Uint256) = floor(exp)
+        let (local remain: Uint256) = sub(exp, whole)
+        
+        let (local whole_pow) = powi(base, (toi(whole)))
+
+        if (uint256_iszero(remain)) == 0:
+            return (r=whole_pow)
+        end
+
+        let (local partial_result: Uint256) = pow_approx(
+            base=base, 
+            exp=remain, 
+            precision=(BPOW_PRECISION())
+        )
+
+        return mul(whole_pow, partial_result) 
     end
 end
 
