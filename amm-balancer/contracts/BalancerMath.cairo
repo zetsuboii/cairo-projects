@@ -176,9 +176,9 @@ func bpow_approx_r {range_check_ptr} (
         return (r=sum)
     end
 
-    # Base case where term >= precision
-    let (local t_lt_p: felt) = uint256_lt(term2, precision)
-    if t_lt_p == 1:
+    # Base case where term2 >= precision
+    let (local p_lt_t: felt) = uint256_lt(precision, term2)
+    if p_lt_t == 1:
         return (r=sum) 
     end
 
