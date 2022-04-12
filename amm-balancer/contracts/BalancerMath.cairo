@@ -88,13 +88,69 @@ func bdiv {range_check_ptr} (a: Uint256, b: Uint256) -> (r: Uint256):
     uint256_check(a)
     uint256_check(b)
     
-    let (local lezero: felt) = uint256_le(b, Uint256(0, 0))
+    let (local is_zero: felt) = uint256_iszero(b)
     with_attr error_msg("Division to zero"):
-        assert_not_zero(lezero)
+        assert is_zero = 0
     end
 
     let (local result: Uint256, _) = uint256_unsigned_div_rem(a,b)
     return (r=result)
+end
+
+func bpowi {range_check_ptr} (a: Uint256, n: Uint256) -> (r: Uint256):
+    alloc_locals
+    uint256_check(a)
+    uint256_check(n)
+
+    let (_, local nmod2: Uint256) = uint256_unsigned_div_rem(n, Uint256(2,0))
+    let (local is_zero: felt) = uint256_iszero(nmod2)
+    if is_zero == 1:
+        let (local base) = bbase()
+        let (local n_start) = bdiv(n, Uint256(2,0))
+        return bpowi_r(a, n_start, base)
+    else:
+        let (local n_start) = bdiv(n, Uint256(2,0))
+        return bpowi_r(a, n_start, a)
+    end 
+end
+
+# Recursive part of the bpowi
+func bpowi_r {range_check_ptr} (a: Uint256, n: Uint256, z: Uint256) -> (r: Uint256):
+    alloc_locals
+
+    # Exit case, if n == 0 return z
+    let (is_zero: felt) = uint256_iszero(n)
+    if is_zero == 1:
+        return (r=z)
+    end
+
+    let (local a_next) = bmul(a, a)
+    let (local n_next, local nmod2: Uint256) = uint256_unsigned_div_rem(n, Uint256(2,0))
+
+    let (local nmod2_zero: felt) = uint256_iszero(nmod2)
+
+    # If n%2 != 0, multiply z by a and continue the loop  
+    if nmod2_zero == 0:
+        let (local z_next) = bmul(z, a_next)
+        return bpowi_r(a_next, n_next, z_next)
+    end
+
+    # Otherwise, leave z unchanged and continue the loop
+    return bpowi_r(a_next, n_next, z)
+end
+
+func uint256_iszero {range_check_ptr} (a: Uint256) -> (is_zero: felt):
+    alloc_locals
+    
+    if a.low != 0:
+        return (is_zero=0)
+    end
+
+    if a.high != 0:
+        return (is_zero=0)
+    end
+
+    return (is_zero=1)
 end
 
 # func calc_spot_price{
