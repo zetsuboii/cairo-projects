@@ -1,9 +1,8 @@
 %lang starknet
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
-from starkware.cairo.common.uint256 import (
-    Uint256, uint256_add, uint256_sub, uint256_unsigned_div_rem, uint256_mul
-)
+from starkware.cairo.common.uint256 import Uint256, uint256_add, uint256_sub, uint256_unsigned_div_rem, uint256_mul, uint256_le
+from starkware.cairo.common.math import assert_not_zero
 
 # Balancer deals with numbers by extending them with 10**18
 # Extended version of a number is prefixed by "b" and referred as
@@ -27,7 +26,55 @@ func bfloor {range_check_ptr} (a: Uint256) -> (b: Uint256):
     # First divide by bbase than multiply by it
     let (local down_scaled: Uint256) = btoi(a)
     let (local base) = bbase()
-    return uint256_mul(down_scaled, base)
+
+    # Currently only taking the top
+    let (low: Uint256, high: Uint256) = uint256_mul(down_scaled, base)
+
+    with_attr error_msg("Overflow on bfloor"):
+        assert_not_zero(high.low)
+        assert_not_zero(high.high)
+    end
+
+    return(b=low)
+end
+
+# Adds a to b, reverts if there's an overflow
+func badd {range_check_ptr} (a: Uint256, b: Uint256) -> (r: Uint256):
+    alloc_locals
+    let (result: Uint256, carry: felt) = uint256_add(a,b)
+    
+    with_attr error_msg("Overflow on badd"):
+        assert carry = 0
+    end
+
+    return (r=result)
+end
+
+# Subtracts a from b, reverts if b > a
+func bsub {range_check_ptr} (a: Uint256, b: Uint256) -> (r: Uint256):
+    let (result: Uint256, flag) = bsub_sign(a,b)
+    with_attr error_msg("Underflow on bsub"):
+        assert flag = 0
+    end
+    return (r=result)   
+end
+
+func bsub_sign {range_check_ptr} (
+    a: Uint256, 
+    b: Uint256
+) -> (
+    r: Uint256, 
+    flag: felt
+):
+    alloc_locals
+    let (local blea) = uint256_le(b,a)
+    if blea == 1:
+        let (local result: Uint256) = uint256_sub(a,b)
+        return (r=result, flag=0)
+    else: 
+        let (local result: Uint256) = uint256_sub(b,a)
+        return (r=result, flag=1)
+    end 
 end
 
 
