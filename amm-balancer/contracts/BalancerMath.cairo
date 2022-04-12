@@ -1,7 +1,7 @@
 %lang starknet
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
-from starkware.cairo.common.uint256 import Uint256, uint256_add, uint256_sub, uint256_unsigned_div_rem, uint256_mul, uint256_le
+from starkware.cairo.common.uint256 import Uint256, uint256_add, uint256_sub, uint256_unsigned_div_rem, uint256_mul, uint256_le, uint256_check
 from starkware.cairo.common.math import assert_not_zero
 
 # Balancer deals with numbers by extending them with 10**18
@@ -16,7 +16,7 @@ end
 func btoi {range_check_ptr} (a: Uint256) -> (b: Uint256):
     alloc_locals
     let (local base) = bbase()
-    let (b: Uint256, _) = uint256_unsigned_div_rem(a, base)
+    let (b: Uint256) = bdiv(a,base)
     return (b=b)
 end
 
@@ -72,6 +72,7 @@ func bsub_sign {range_check_ptr} (
 end
 
 func bmul {range_check_ptr} (a: Uint256, b: Uint256) -> (r: Uint256):
+    # Currently only using low and reverting on overflow
     let (low: Uint256, high: Uint256) = uint256_mul(a, b)
 
     with_attr error_msg("Overflow on bmul"):
@@ -82,6 +83,19 @@ func bmul {range_check_ptr} (a: Uint256, b: Uint256) -> (r: Uint256):
     return(r=low)
 end
 
+func bdiv {range_check_ptr} (a: Uint256, b: Uint256) -> (r: Uint256):
+    alloc_locals
+    uint256_check(a)
+    uint256_check(b)
+    
+    let (local lezero: felt) = uint256_le(b, Uint256(0, 0))
+    with_attr error_msg("Division to zero"):
+        assert_not_zero(lezero)
+    end
+
+    let (local result: Uint256, _) = uint256_unsigned_div_rem(a,b)
+    return (r=result)
+end
 
 # func calc_spot_price{
 #     syscall_ptr: felt*,
