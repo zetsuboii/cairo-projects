@@ -9,6 +9,7 @@ import "./IStarknetCore.sol";
 /// @notice Handles interactions between L1-L2
 contract MostarManager is ERC721Holder {
   error UninitializedOnL2();
+  error NotOwner();
   
   address public owner;        // Deployer of the contract
   address public initializor;  // Initializes L2 contracts
@@ -23,7 +24,9 @@ contract MostarManager is ERC721Holder {
     453167574301948615256927179001098538682611778866623857597439531518333154691;
   
   // ERC721 address => ERC721m address
-  mapping (IERC721 => uint256) public initialized;
+  mapping (IERC721 => uint256) public initialized721;
+  // ERC721 address => tokenId => old owner
+  mapping (IERC721 => mapping(uint256 => address)) public owners721;
 
   constructor() {
     owner = msg.sender;
@@ -32,16 +35,23 @@ contract MostarManager is ERC721Holder {
   }
 
   /// @notice Locks ERC721 asset and sends a message to L2
+  /// @param tokenAddress   ERC721 asset's address
+  /// @param l2UserAddress  Starknet address of user
+  /// @param tokenId        ID of the token
   function send721ToL2(
     ERC721 tokenAddress, 
     uint256 l2UserAddress, 
     uint256 tokenId
   ) external {
-    if (initialized[tokenAddress] == 0) revert UninitializedOnL2();
+    if (initialized721[tokenAddress] == 0) revert UninitializedOnL2();
+
 
     // Get user's token, it'll revert if user doesn't hold the asset
     // We're importing ERC721Holder, we don't need safeTransferFrom
     tokenAddress.transferFrom(msg.sender, address(this), tokenId);
+    
+    // We'll need owner's information later in retrieve721
+    owners721[tokenAddress][tokenId] = msg.sender;
 
     // Convert token URI of token to uint256 array
     uint256[] memory stringArr = _stringToUintArray(
@@ -62,12 +72,33 @@ contract MostarManager is ERC721Holder {
 
     // Call L2
     starknetCore.sendMessageToL2(
-      initialized[tokenAddress], 
+      initialized721[tokenAddress], 
       REGISTER_SELECTOR, 
       registerPayload
     );
   }
 
+  /// @notice Retrieves the locked NFT that is sent back from L2
+  /// @param tokenAddress   ERC721 asset's address
+  /// @param tokenId        ID of the token
+  function retrieve721(ERC721 tokenAddress, uint256 tokenId) external {
+    if(tokenAddress.ownerOf(tokenId) == msg.sender) revert NotOwner();
+    if (initialized721[tokenAddress] == 0) revert UninitializedOnL2();
+
+    uint256[] memory rcvPayload = new uint256[](4);
+    rcvPayload[0] = SEND_BACK;
+    rcvPayload[1] = uint256(uint160(address(tokenAddress))); // solidity.
+    rcvPayload[2] = tokenId % (2**128);
+    rcvPayload[3] = tokenId / (2**128);
+
+    starknetCore.consumeMessageFromL2(initialized721[tokenAddress], rcvPayload);
+
+    // If above call didn't revert it means there was really a message that
+    // sent the asset back, in that case transfer NFT back to the owner
+    tokenAddress.transferFrom(address(this), msg.sender, tokenId);
+  }
+
+  /// @notice Converts ASCII string to uint256 array
   function _stringToUintArray(string memory s) 
     private pure returns (uint256[] memory) {
     bytes memory b = bytes(s);
