@@ -48,6 +48,14 @@ end
 func l1_manager() -> (addr: felt):
 end
 
+@storage_var
+func custom_uri(token_id: Uint256, idx: felt) -> (uri_part: felt):
+end
+
+@storage_var
+func custom_uri_len(token_id: Uint256) -> (len: felt):
+end
+
 #	 ██████╗███╗   ██╗███████╗████████╗ ██████╗ ██████╗ 
 #	██╔════╝████╗  ██║██╔════╝╚══██╔══╝██╔═══██╗██╔══██╗
 #	██║     ██╔██╗ ██║███████╗   ██║   ██║   ██║██████╔╝
@@ -273,13 +281,9 @@ func initialize{
   return ()
 end
 
-# Registers a token id for the owner of that token
-# * This will mint a new ERC721 asset on L2 side
-# * It shouldn't be possible to directly pass uint256 L1->L2, because of 
-# that I'll be passing low and high order bits seperately
-# SELECTOR: 453167574301948615256927179001098538682611778866623857597439531518333154691
+# Can be used if token URI is smaller than 32
 @l1_handler
-func register{
+func register_simple{
   syscall_ptr: felt*,
   pedersen_ptr: HashBuiltin*,
   range_check_ptr
@@ -293,8 +297,6 @@ func register{
 ):
   only_manager(from_address)
 
-  # TODO: Validate addresses
-
   # Construct the token ID and mint token
   let token_id: Uint256 = Uint256(low=token_id_low, high=token_id_high) 
   uint256_check(token_id) # Check if received token ID is valid 
@@ -303,6 +305,77 @@ func register{
   ERC721_setTokenURI(token_id=token_id, token_uri=token_uri)
   return ()
 end
+
+# Registers a token id for the owner of that token
+# We cannot assume URI length on L1, this method decodes input in a way that
+# both complies Cairo ERC721 and L1 ERC721. In this case URI on Cairo is not
+# guaranteed to make sense (It'll only work if length is < 32)
+# * This will mint a new ERC721 asset on L2 side
+# * It shouldn't be possible to directly pass uint256 L1->L2, because of 
+# that I'll be passing low and high order bits seperately
+# SELECTOR: 453167574301948615256927179001098538682611778866623857597439531518333154691
+@l1_handler
+@raw_input
+func register{
+  syscall_ptr: felt*,
+  pedersen_ptr: HashBuiltin*,
+  range_check_ptr
+}(
+  selector: felt,
+  calldata_size: felt,
+  calldata: felt*
+):
+  alloc_locals
+
+  with_attr error_msg("Invalid selector"):
+    assert selector = 453167574301948615256927179001098538682611778866623857597439531518333154691
+  end
+
+  # from_address   0 
+  # l2addr         1
+  # token_id_low   2 
+  # token_id_high  3
+  # token_uri_len  4
+  # token_uri      variant
+
+  only_manager(calldata[0])
+
+  # Construct the token ID and mint token
+  let token_id: Uint256 = Uint256(low=calldata[2], high=calldata[3]) 
+  uint256_check(token_id) # Check if received token ID is valid 
+
+  ERC721_mint(to=calldata[1], token_id=token_id)
+
+  # I'll set the first index of token URI as ERC721's token URI, and save rest
+  # as custom URI. This will help both  
+  ERC721_setTokenURI(token_id=token_id, token_uri=calldata[5])
+
+  custom_uri_len.write(token_id, calldata[4])
+
+  # Save all of the URI to the custom storage
+  save_token_uri(token_id, calldata, 5, calldata_size)
+  return ()
+end
+
+func save_token_uri{
+  syscall_ptr: felt*,
+  pedersen_ptr: HashBuiltin*,
+  range_check_ptr
+}(
+  token_id: Uint256, 
+  uri: felt*, 
+  idx: felt,
+  len: felt
+):
+  custom_uri.write(token_id, idx, uri[idx])
+  
+  if idx == (len-1):
+    return ()
+  else:
+    return save_token_uri(token_id, uri, idx+1, len)
+  end
+end
+
 
 #	██╗███╗   ██╗████████╗███████╗██████╗ ███╗   ██╗ █████╗ ██╗     
 #	██║████╗  ██║╚══██╔══╝██╔════╝██╔══██╗████╗  ██║██╔══██╗██║     
