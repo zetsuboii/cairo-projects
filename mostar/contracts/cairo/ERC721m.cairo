@@ -8,6 +8,7 @@ from starkware.starknet.common.messages import send_message_to_l1
 from starkware.cairo.common.uint256 import Uint256, uint256_check
 from starkware.cairo.common.math import assert_nn_le
 
+from openzeppelin.introspection.ERC165 import ERC165_supports_interface
 from openzeppelin.token.erc721.library import (
   ERC721_name,
   ERC721_symbol,
@@ -136,6 +137,16 @@ func tokenURI{
   return ERC721_tokenURI(token_id)
 end
 
+@view
+func supportsInterface{
+  syscall_ptr : felt*,
+  pedersen_ptr : HashBuiltin*,
+  range_check_ptr
+}(interfaceId: felt) -> (success: felt):
+  let (success) = ERC165_supports_interface(interfaceId)
+  return (success)
+end
+
 # Returns address of the original asset on L1
 @view
 func get_l1_address{
@@ -152,6 +163,56 @@ end
 #	██╔══╝   ██╔██╗    ██║   ██╔══╝  ██╔══██╗██║╚██╗██║██╔══██║██║     
 #	███████╗██╔╝ ██╗   ██║   ███████╗██║  ██║██║ ╚████║██║  ██║███████╗
 #	╚══════╝╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝
+
+@external
+func approve{
+  pedersen_ptr: HashBuiltin*, 
+  syscall_ptr: felt*, 
+  range_check_ptr
+}(to: felt, tokenId: Uint256):
+  ERC721_approve(to, tokenId)
+  return ()
+end
+
+@external
+func setApprovalForAll{
+  syscall_ptr: felt*, 
+  pedersen_ptr: HashBuiltin*, 
+  range_check_ptr
+}(operator: felt, approved: felt):
+  ERC721_setApprovalForAll(operator, approved)
+  return ()
+end
+
+@external
+func transferFrom{
+  pedersen_ptr: HashBuiltin*, 
+  syscall_ptr: felt*, 
+  range_check_ptr
+}(
+  from_: felt, 
+  to: felt, 
+  tokenId: Uint256
+):
+  ERC721_transferFrom(from_, to, tokenId)
+  return ()
+end
+
+@external
+func safeTransferFrom{
+  pedersen_ptr: HashBuiltin*, 
+  syscall_ptr: felt*, 
+  range_check_ptr
+}(
+  from_: felt, 
+  to: felt, 
+  tokenId: Uint256,
+  data_len: felt, 
+  data: felt*
+):
+  ERC721_safeTransferFrom(from_, to, tokenId, data_len, data)
+  return ()
+end
 
 # Sends asset back to L1
 # It is done by burning the ERC721 asset and sending a message to L1
@@ -227,15 +288,19 @@ func register{
   owner: felt,
   l2addr: felt,
   token_id_low: felt, 
-  token_id_high: felt
+  token_id_high: felt,
+  token_uri: felt
 ):
   only_manager(from_address)
+
+  # TODO: Validate addresses
 
   # Construct the token ID and mint token
   let token_id: Uint256 = Uint256(low=token_id_low, high=token_id_high) 
   uint256_check(token_id) # Check if received token ID is valid 
-  
+
   ERC721_mint(to=l2addr, token_id=token_id)
+  ERC721_setTokenURI(token_id=token_id, token_uri=token_uri)
   return ()
 end
 
