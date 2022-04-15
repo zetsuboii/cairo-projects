@@ -1,8 +1,13 @@
 %lang starknet
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
-from starkware.cairo.common.math import assert_nn_le
+from starkware.cairo.common.alloc import alloc
+from starkware.starknet.common.syscalls import get_caller_address
+from starkware.starknet.common.messages import send_message_to_l1
+
 from starkware.cairo.common.uint256 import Uint256, uint256_check
+from starkware.cairo.common.math import assert_nn_le
+
 from openzeppelin.token.erc721.library import (
   ERC721_name,
   ERC721_symbol,
@@ -22,6 +27,10 @@ from openzeppelin.token.erc721.library import (
   ERC721_only_token_owner,
   ERC721_setTokenURI
 )
+
+# Optional - Type of message we're sending
+# keccak256(send_back_to_l1(Uint256))[:4] = 0x15f1c585 = 368166277
+const MESSAGE_SEND_BACK = 368166277
 
 #	███████╗████████╗ ██████╗ ██████╗  █████╗  ██████╗ ███████╗
 #	██╔════╝╚══██╔══╝██╔═══██╗██╔══██╗██╔══██╗██╔════╝ ██╔════╝
@@ -151,9 +160,34 @@ func send_back_to_l1{
   syscall_ptr: felt*,
   pedersen_ptr: HashBuiltin*,
   range_check_ptr
-}(token_id: felt):
+}(token_id: Uint256):
+  alloc_locals
+  uint256_check(token_id)
+
+  # Check if caller owns the token
+  let (local caller: felt) = get_caller_address()
+  let (local token_owner: felt) = ERC721_ownerOf(token_id)
+  with_attr error_msg("Caller doesn't own the asset"):
+    assert caller = token_owner
+  end
+
+  # Burn the asset
+  ERC721_burn(token_id)
+
+  # Call L1
+  let (local manager_addr: felt) = l1_manager.read()
+  let (local token_addr: felt) = l1_address.read()
+  let (message_payload: felt*) = alloc()
+  assert message_payload[0] = MESSAGE_SEND_BACK
+  assert message_payload[1] = token_addr
+  assert message_payload[2] = token_id.low
+  assert message_payload[3] = token_id.high
   
-  # TODO
+  send_message_to_l1(
+    to_address=manager_addr,
+    payload_size=4,
+    payload=message_payload
+  )
   return ()
 end
 
@@ -199,7 +233,7 @@ func register{
 
   # Construct the token ID and mint token
   let token_id: Uint256 = Uint256(low=token_id_low, high=token_id_high) 
-  uint256_check(token_id)  
+  uint256_check(token_id) # Check if received token ID is valid 
   
   ERC721_mint(to=l2addr, token_id=token_id)
   return ()
