@@ -2,7 +2,7 @@
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.math import assert_nn_le
-from starkware.cairo.common.uint256 import Uint256
+from starkware.cairo.common.uint256 import Uint256, uint256_check
 from openzeppelin.token.erc721.library import (
   ERC721_name,
   ERC721_symbol,
@@ -22,8 +22,6 @@ from openzeppelin.token.erc721.library import (
   ERC721_only_token_owner,
   ERC721_setTokenURI
 )
-
-const HALF_UINT = 2**128 - 1
 
 #	███████╗████████╗ ██████╗ ██████╗  █████╗  ██████╗ ███████╗
 #	██╔════╝╚══██╔══╝██╔═══██╗██╔══██╗██╔══██╗██╔════╝ ██╔════╝
@@ -154,7 +152,7 @@ func send_back_to_l1{
   pedersen_ptr: HashBuiltin*,
   range_check_ptr
 }(token_id: felt):
-
+  
   # TODO
   return ()
 end
@@ -199,13 +197,10 @@ func register{
 ):
   only_manager(from_address)
 
-  with_attr error_msg("Invalid value for low or high bits of token id"):
-    assert_nn_le(token_id_low, HALF_UINT)
-    assert_nn_le(token_id_high, HALF_UINT)
-  end
-
   # Construct the token ID and mint token
   let token_id: Uint256 = Uint256(low=token_id_low, high=token_id_high) 
+  uint256_check(token_id)  
+  
   ERC721_mint(to=l2addr, token_id=token_id)
   return ()
 end
