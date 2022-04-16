@@ -67,9 +67,10 @@ contract Mostar is ERC721Holder {
     initialized721[tokenAddress] = l2TokenAddress;
 
     // POSSIBLE FEATURE: Append Mostar to name and .M to the symbol
-    uint256[] memory initPayload = new uint256[](2);
+    uint256[] memory initPayload = new uint256[](3);
     initPayload[0] = _stringToUint(tokenAddress.name());
     initPayload[1] = _stringToUint(tokenAddress.symbol());
+    initPayload[2] = uint256(uint160(address(this)));
 
     // Call L2 so that contract is initialized
     starknetCore.sendMessageToL2(

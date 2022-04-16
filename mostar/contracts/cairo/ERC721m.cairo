@@ -277,9 +277,10 @@ func initialize{
   syscall_ptr: felt*,
   pedersen_ptr: HashBuiltin*,
   range_check_ptr
-}(from_address: felt, name: felt, symbol: felt):
+}(from_address: felt, name: felt, symbol: felt, addr: felt):
   only_manager(from_address)
 
+  l1_address.write(addr)
   ERC721_initializer(name=name, symbol=symbol)
   return ()
 end
