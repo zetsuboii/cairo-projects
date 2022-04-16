@@ -10,12 +10,12 @@ import "./IStarknetCore.sol";
 contract Mostar is ERC721Holder {
   error NotOwner();
   error ZeroAddress();
-  error NotInitializor();
+  error NotInitializer();
   error UninitializedOnL2();
   error AlreadyInitialized();
   
   address public owner;        // Deployer of the contract
-  address public initializor;  // Initializes L2 contracts
+  address public initializer;  // Initializes L2 contracts
 
   IStarknetCore starknetCore;
   // Function IDs for consuming messages
@@ -33,7 +33,7 @@ contract Mostar is ERC721Holder {
 
   constructor() {
     owner = msg.sender;
-    initializor = msg.sender;
+    initializer = msg.sender;
     starknetCore = IStarknetCore(0xde29d060D45901Fb19ED6C6e959EB22d8626708e);
   }
 
@@ -42,15 +42,15 @@ contract Mostar is ERC721Holder {
     _;
   }
 
-  modifier onlyInitializor {
-    if (msg.sender != owner) revert NotInitializor();
+  modifier onlyInitializer {
+    if (msg.sender != initializer) revert NotInitializer();
     _;
   }
 
-  /// @notice Sets new initializor, only owner can call it
-  function setInitializor(address newInitializor) external onlyOwner {
-    if (newInitializor == address(0)) revert ZeroAddress();
-    initializor = newInitializor;
+  /// @notice Sets new initializer, only owner can call it
+  function setInitializor(address newInitializer) external onlyOwner {
+    if (newInitializer == address(0)) revert ZeroAddress();
+    initializer = newInitializer;
   }
 
   /// @notice Save L2 ERC721m address for a ERC721 token, manager only
@@ -60,7 +60,7 @@ contract Mostar is ERC721Holder {
   function initialize721(
     ERC721 tokenAddress, 
     uint256 l2TokenAddress
-  ) external onlyInitializor{
+  ) external onlyInitializer{
     if(initialized721[tokenAddress] != 0) revert AlreadyInitialized();
 
     // Initialize token address
