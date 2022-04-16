@@ -8,8 +8,10 @@ import "./IStarknetCore.sol";
 
 /// @notice Handles interactions between L1-L2
 contract MostarManager is ERC721Holder {
-  error UninitializedOnL2();
   error NotOwner();
+  error ZeroAddress();
+  error NotInitializor();
+  error UninitializedOnL2();
   
   address public owner;        // Deployer of the contract
   address public initializor;  // Initializes L2 contracts
@@ -34,6 +36,46 @@ contract MostarManager is ERC721Holder {
     starknetCore = IStarknetCore(0xde29d060D45901Fb19ED6C6e959EB22d8626708e);
   }
 
+  modifier onlyOwner {
+    if (msg.sender != owner) revert NotOwner();
+    _;
+  }
+
+  modifier onlyInitializor {
+    if (msg.sender != owner) revert NotInitializor();
+    _;
+  }
+
+  /// @notice Sets new initializor, only owner can call it
+  function setInitializor(address newInitializor) external onlyOwner {
+    if (newInitializor == address(0)) revert ZeroAddress();
+    initializor = newInitializor;
+  }
+
+  /// @notice Save L2 ERC721m address for a ERC721 token, manager only
+  /// @param tokenAddress    ERC721 asset's address
+  /// @param l2TokenAddress  Starknet address of token
+  /// @dev @pre: Token address exists on Starknet
+  function initialize721(
+    ERC721 tokenAddress, 
+    uint256 l2TokenAddress
+  ) external onlyInitializor{
+    // Initialize token address
+    initialized721[tokenAddress] = l2TokenAddress;
+
+    // POSSIBLE FEATURE: Append Mostar to name and .M to the symbol
+    uint256[] memory initPayload = new uint256[](2);
+    initPayload[0] = _stringToUint(tokenAddress.name());
+    initPayload[1] = _stringToUint(tokenAddress.symbol());
+
+    // Call L2 so that contract is initialized
+    starknetCore.sendMessageToL2(
+      l2TokenAddress, 
+      INITIALIZE_SELECTOR, 
+      initPayload
+    );
+  }
+
   /// @notice Locks ERC721 asset and sends a message to L2
   /// @param tokenAddress   ERC721 asset's address
   /// @param l2UserAddress  Starknet address of user
@@ -44,7 +86,6 @@ contract MostarManager is ERC721Holder {
     uint256 tokenId
   ) external {
     if (initialized721[tokenAddress] == 0) revert UninitializedOnL2();
-
 
     // Get user's token, it'll revert if user doesn't hold the asset
     // We're importing ERC721Holder, we don't need safeTransferFrom
@@ -102,13 +143,27 @@ contract MostarManager is ERC721Holder {
   function _stringToUintArray(string memory s) 
     private pure returns (uint256[] memory) {
     bytes memory b = bytes(s);
+
     uint256 size = b.length;
     uint256[] memory arr = new uint256[]((size/32)+1);
-
-    for (uint256 i = 0; i < size; i++) {
+    for (uint256 i = 0; i < size; ++i) {
       arr[i/32] <<= 8;
       arr[i/32] += uint256(uint8(b[i]));
     }
     return arr;
+  }
+
+  /// @notice Converts ASCII string to uint256, given its length is lt 32
+  function _stringToUint(string memory s) 
+    private pure returns (uint256) {
+    bytes memory b = bytes(s);
+
+    uint256 size = b.length;
+    uint256 sum;
+    for (uint256 i = 0; i < size; ++i) {
+      sum <<= 8;
+      sum += uint256(uint8(b[i]));
+    }
+    return sum;
   }
 }
