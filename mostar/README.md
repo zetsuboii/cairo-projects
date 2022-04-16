@@ -33,3 +33,4 @@ contracts
 
 - Add ERC1155 and ERC20 support
 - Add cross-chain tests
+- Ability to cancel an L1->L2 message
