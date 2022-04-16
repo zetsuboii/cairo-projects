@@ -7,11 +7,12 @@ import "../../node_modules/@openzeppelin/contracts/token/ERC721/utils/ERC721Hold
 import "./IStarknetCore.sol";
 
 /// @notice Handles interactions between L1-L2
-contract MostarManager is ERC721Holder {
+contract Mostar is ERC721Holder {
   error NotOwner();
   error ZeroAddress();
   error NotInitializor();
   error UninitializedOnL2();
+  error AlreadyInitialized();
   
   address public owner;        // Deployer of the contract
   address public initializor;  // Initializes L2 contracts
@@ -60,6 +61,8 @@ contract MostarManager is ERC721Holder {
     ERC721 tokenAddress, 
     uint256 l2TokenAddress
   ) external onlyInitializor{
+    if(initialized721[tokenAddress] != 0) revert AlreadyInitialized();
+
     // Initialize token address
     initialized721[tokenAddress] = l2TokenAddress;
 
