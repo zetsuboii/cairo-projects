@@ -48,7 +48,11 @@ contract Mostar is ERC721Holder {
   }
 
   /// @notice Sets new initializer, only owner can call it
+<<<<<<< HEAD
   function setInitializer(address newInitializer) external onlyOwner {
+=======
+  function setInitializor(address newInitializer) external onlyOwner {
+>>>>>>> 33e132a5ebbda7a300977d6c1e1c1eb979051987
     if (newInitializer == address(0)) revert ZeroAddress();
     initializer = newInitializer;
   }
