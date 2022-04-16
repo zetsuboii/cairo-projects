@@ -1,5 +1,8 @@
 %lang starknet
 
+# ERC721 Mostar
+# An ERC721 asset that is reflective on its L1 counterpart
+
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.alloc import alloc
 from starkware.starknet.common.syscalls import get_caller_address
