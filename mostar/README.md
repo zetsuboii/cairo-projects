@@ -4,12 +4,12 @@ A multi-asset bridge between Ethereum and Starknet
 ## How does it work?
 
 ### Depositing Assets
-![Depositing Asset](./assets/deposit.png)
+![Depositing Asset](./assets/deposit.png) <br>
 Original asset is locked on L1 contract and a new asset is minted on designated L2 contract.
 
 
 ### Retrieving Assets
-![Depositing Asset](./assets/retrieve.png)
+![Depositing Asset](./assets/retrieve.png) <br>
 Asset on L2 is burned and a message to unlock L1 asset is sent. Asset then can be retrieved by calling retrieve function on L1
 
 ### Initialization
