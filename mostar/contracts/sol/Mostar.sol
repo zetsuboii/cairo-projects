@@ -149,10 +149,10 @@ contract Mostar is ERC721Holder {
     bytes memory b = bytes(s);
 
     uint256 size = b.length;
-    uint256[] memory arr = new uint256[]((size/32)+1);
+    uint256[] memory arr = new uint256[]((size/31)+1);
     for (uint256 i = 0; i < size; ++i) {
-      arr[i/32] <<= 8;
-      arr[i/32] += uint256(uint8(b[i]));
+      arr[i/31] <<= 8;
+      arr[i/31] += uint256(uint8(b[i]));
     }
     return arr;
   }
