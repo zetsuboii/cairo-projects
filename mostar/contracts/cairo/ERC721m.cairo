@@ -227,12 +227,16 @@ end
 
 # Sends asset back to L1
 # It is done by burning the ERC721 asset and sending a message to L1
+# Since L2 NFT can change owner, owner of the asset decides L1 recipient (@sourdzl)
 @external
 func send_back_to_l1{
   syscall_ptr: felt*,
   pedersen_ptr: HashBuiltin*,
   range_check_ptr
-}(token_id: Uint256):
+}(
+  token_id: Uint256,
+  l1_recipient: felt
+):
   alloc_locals
   uint256_check(token_id)
 
@@ -254,10 +258,11 @@ func send_back_to_l1{
   assert message_payload[1] = token_addr
   assert message_payload[2] = token_id.low
   assert message_payload[3] = token_id.high
+  assert message_payload[4] = l1_recipient
   
   send_message_to_l1(
     to_address=manager_addr,
-    payload_size=4,
+    payload_size=5,
     payload=message_payload
   )
   return ()

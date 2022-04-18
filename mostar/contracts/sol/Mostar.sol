@@ -127,7 +127,6 @@ contract Mostar is ERC721Holder {
   /// @param tokenAddress   ERC721 asset's address
   /// @param tokenId        ID of the token
   function retrieve721(ERC721 tokenAddress, uint256 tokenId) external {
-    if(tokenAddress.ownerOf(tokenId) == msg.sender) revert NotOwner();
     if (initialized721[tokenAddress] == 0) revert UninitializedOnL2();
 
     uint256[] memory rcvPayload = new uint256[](4);
@@ -135,6 +134,7 @@ contract Mostar is ERC721Holder {
     rcvPayload[1] = uint256(uint160(address(tokenAddress))); // solidity.
     rcvPayload[2] = tokenId % (2**128);
     rcvPayload[3] = tokenId / (2**128);
+    rcvPayload[4] = uint256(uint160(address(msg.sender)));
 
     starknetCore.consumeMessageFromL2(initialized721[tokenAddress], rcvPayload);
 
