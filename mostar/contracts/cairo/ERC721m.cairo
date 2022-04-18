@@ -168,6 +168,16 @@ func get_l1_address{
   return l1_address.read()
 end
 
+# Returns address of the Mostar contract on L1
+@view
+func get_l1_manager{
+  syscall_ptr: felt*,
+  pedersen_ptr: HashBuiltin*,
+  range_check_ptr
+}() -> (l1_address: felt):
+  return l1_manager.read()
+end
+
 #	███████╗██╗  ██╗████████╗███████╗██████╗ ███╗   ██╗ █████╗ ██╗     
 #	██╔════╝╚██╗██╔╝╚══██╔══╝██╔════╝██╔══██╗████╗  ██║██╔══██╗██║     
 #	█████╗   ╚███╔╝    ██║   █████╗  ██████╔╝██╔██╗ ██║███████║██║     
