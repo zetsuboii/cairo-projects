@@ -129,7 +129,7 @@ contract Mostar is ERC721Holder {
   function retrieve721(ERC721 tokenAddress, uint256 tokenId) external {
     if (initialized721[tokenAddress] == 0) revert UninitializedOnL2();
 
-    uint256[] memory rcvPayload = new uint256[](4);
+    uint256[] memory rcvPayload = new uint256[](5);
     rcvPayload[0] = SEND_BACK;
     rcvPayload[1] = uint256(uint160(address(tokenAddress))); // solidity.
     rcvPayload[2] = tokenId % (2**128);
