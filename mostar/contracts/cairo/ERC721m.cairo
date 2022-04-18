@@ -227,7 +227,7 @@ end
 
 # Sends asset back to L1
 # It is done by burning the ERC721 asset and sending a message to L1
-# Since L2 NFT can change owner, owner of the asset decides L1 recipient (@sourdzl)
+# Since L2 NFT can change ownership, owner of the asset decides L1 recipient (@sourdzl)
 @external
 func send_back_to_l1{
   syscall_ptr: felt*,
