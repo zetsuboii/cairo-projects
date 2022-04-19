@@ -1,4 +1,5 @@
 """contract.cairo test file."""
+from ast import Await
 import os
 import pytest
 import asyncio
@@ -96,9 +97,17 @@ async def test_register_uri(factory):
     token_id=token_id,
     offset=0
   ).call()
-
   assert customuri_call.result == (
     str_to_felt("URI 1"),
     str_to_felt("URI 2"),
     0, 0, 0, 0, 0, 0,
   )
+
+  owner_call = await mostar.ownerOf(token_id=token_id).call()
+  assert owner_call.result == (l2_owner_signer.public_key, )
+
+  balance_call = await mostar.balanceOf(owner=l2_owner_signer.public_key).call()
+  assert balance_call.result == (uint(1), )
+
+  uri_call = await mostar.tokenURI(token_id=token_id).call()
+  assert uri_call.result == (str_to_felt("URI 1"), )
