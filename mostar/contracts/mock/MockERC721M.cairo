@@ -188,25 +188,30 @@ func get_custom_uri{
   syscall_ptr: felt*,
   pedersen_ptr: HashBuiltin*,
   range_check_ptr
-}(token_id: Uint256) -> (retdata_size: felt, retdata: felt*):
-  alloc_locals
+}(
+  token_id: Uint256, 
+  offset: felt
+) -> (
+  retdata_size: felt, 
+  retdata: felt*
+):
   let (uri: felt*) = alloc()
   
-  let (uri0: felt) = custom_uri.read(token_id, 0)
+  let (uri0: felt) = custom_uri.read(token_id, 0 + offset)
   uri[0] = uri0
-  let (uri1: felt) = custom_uri.read(token_id, 1)
+  let (uri1: felt) = custom_uri.read(token_id, 1 + offset)
   uri[1] = uri1
-  let (uri2: felt) = custom_uri.read(token_id, 2)
+  let (uri2: felt) = custom_uri.read(token_id, 2 + offset)
   uri[2] = uri2 
-  let (uri3: felt) = custom_uri.read(token_id, 3)
+  let (uri3: felt) = custom_uri.read(token_id, 3 + offset)
   uri[3] = uri3 
-  let (uri4: felt) = custom_uri.read(token_id, 4)
+  let (uri4: felt) = custom_uri.read(token_id, 4 + offset)
   uri[4] = uri4 
-  let (uri5: felt) = custom_uri.read(token_id, 5)
+  let (uri5: felt) = custom_uri.read(token_id, 5 + offset)
   uri[5] = uri5
-  let (uri6: felt) = custom_uri.read(token_id, 6)
+  let (uri6: felt) = custom_uri.read(token_id, 6 + offset)
   uri[6] = uri6
-  let (uri7: felt) = custom_uri.read(token_id, 7)
+  let (uri7: felt) = custom_uri.read(token_id, 7 + offset)
   uri[7] = uri7
   
   return (
