@@ -384,13 +384,12 @@ func save_token_uri{
   token_id: Uint256, 
   uri: felt*, 
   idx: felt,
-  len: felt
+  len: felt 
 ):
-  custom_uri.write(token_id, idx, uri[idx])
-  
-  if idx == (len-1):
+  if idx == len:
     return ()
   else:
+    custom_uri.write(token_id, idx-5, uri[idx])
     return save_token_uri(token_id, uri, idx+1, len)
   end
 end
