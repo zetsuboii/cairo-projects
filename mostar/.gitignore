@@ -3,6 +3,9 @@ node_modules
 .eslintrc.js
 .npmignore
 
-#Hardhat files
+# Hardhat files
 cache
 artifacts
+
+# Pytest cache
+**/*.pyc
