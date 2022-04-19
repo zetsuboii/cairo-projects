@@ -253,7 +253,7 @@ func send_back_to_l1{
   # Check if caller owns the token
   let (local caller: felt) = get_caller_address()
   let (local token_owner: felt) = ERC721_ownerOf(token_id)
-  with_attr error_msg("Caller doesn't own the asset"):
+  with_attr error_message("Caller doesn't own the asset"):
     assert caller = token_owner
   end
 
@@ -346,7 +346,7 @@ func register{
 ):
   alloc_locals
 
-  with_attr error_msg("Invalid selector"):
+  with_attr error_message("Invalid selector"):
     assert selector = 453167574301948615256927179001098538682611778866623857597439531518333154691
   end
 
@@ -409,7 +409,7 @@ func only_manager{
   range_check_ptr
 }(caller: felt):
   let (manager) = l1_manager.read()
-  with_attr error_msg("Only manager contract can call this function"):
+  with_attr error_message("Only manager contract can call this function"):
     assert manager = caller
   end
   return ()
