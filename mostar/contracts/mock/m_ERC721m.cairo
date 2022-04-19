@@ -178,6 +178,42 @@ func get_l1_manager{
   return l1_manager.read()
 end
 
+# Returns the custom URI of the token ID
+# When allocating an array Cairo expects a constant integer between
+# [-2**15, 2**15), so it is not possible to iterate for custom_uri_len
+# For this reason function returns the indices from 0 to 7
+@view 
+@raw_output
+func get_custom_uri{
+  syscall_ptr: felt*,
+  pedersen_ptr: HashBuiltin*,
+  range_check_ptr
+}(token_id: Uint256) -> (retdata_size: felt, retdata: felt*):
+  alloc_locals
+  let (uri: felt*) = alloc()
+  
+  let (uri0: felt) = custom_uri.read(token_id, 0)
+  uri[0] = uri0
+  let (uri1: felt) = custom_uri.read(token_id, 1)
+  uri[1] = uri1
+  let (uri2: felt) = custom_uri.read(token_id, 2)
+  uri[2] = uri2 
+  let (uri3: felt) = custom_uri.read(token_id, 3)
+  uri[3] = uri3 
+  let (uri4: felt) = custom_uri.read(token_id, 4)
+  uri[4] = uri4 
+  let (uri5: felt) = custom_uri.read(token_id, 5)
+  uri[5] = uri5
+  let (uri6: felt) = custom_uri.read(token_id, 6)
+  uri[6] = uri6
+  let (uri7: felt) = custom_uri.read(token_id, 7)
+  uri[7] = uri7
+  
+  return (
+    retdata_size=8,
+    retdata=uri
+  )
+end
 
 #	███████╗██╗  ██╗████████╗███████╗██████╗ ███╗   ██╗ █████╗ ██╗     
 #	██╔════╝╚██╗██╔╝╚══██╔══╝██╔════╝██╔══██╗████╗  ██║██╔══██╗██║     
@@ -250,7 +286,7 @@ func send_back_to_l1{
   # Check if caller owns the token
   let (local caller: felt) = get_caller_address()
   let (local token_owner: felt) = ERC721_ownerOf(token_id)
-  with_attr error_msg("Caller doesn't own the asset"):
+  with_attr error_message("Caller doesn't own the asset"):
     assert caller = token_owner
   end
 
@@ -329,19 +365,18 @@ end
 # that I'll be passing low and high order bits seperately
 # SELECTOR: 453167574301948615256927179001098538682611778866623857597439531518333154691
 @external
-@raw_input
 func register{
   syscall_ptr: felt*,
   pedersen_ptr: HashBuiltin*,
   range_check_ptr
 }(
   selector: felt,
-  calldata_size: felt,
-  calldata: felt*
+  cdata_len: felt,
+  cdata: felt*
 ):
   alloc_locals
 
-  with_attr error_msg("Invalid selector"):
+  with_attr error_message("Invalid selector"):
     assert selector = 453167574301948615256927179001098538682611778866623857597439531518333154691
   end
 
@@ -352,22 +387,22 @@ func register{
   # token_uri_len  4
   # token_uri      variant
 
-  only_manager(calldata[0])
+  only_manager(cdata[0])
 
   # Construct the token ID and mint token
-  let token_id: Uint256 = Uint256(low=calldata[2], high=calldata[3]) 
+  let token_id: Uint256 = Uint256(low=cdata[2], high=cdata[3]) 
   uint256_check(token_id) # Check if received token ID is valid 
 
-  ERC721_mint(to=calldata[1], token_id=token_id)
+  ERC721_mint(to=cdata[1], token_id=token_id)
 
   # I'll set the first index of token URI as ERC721's token URI, and save rest
   # as custom URI. This will help both  
-  ERC721_setTokenURI(token_id=token_id, token_uri=calldata[5])
+  ERC721_setTokenURI(token_id=token_id, token_uri=cdata[5])
 
-  custom_uri_len.write(token_id, calldata[4])
+  custom_uri_len.write(token_id, cdata[4])
 
   # Save all of the URI to the custom storage
-  save_token_uri(token_id, calldata, 5, calldata_size)
+  save_token_uri(token_id, cdata, 5, cdata_len)
   return ()
 end
 
@@ -379,13 +414,12 @@ func save_token_uri{
   token_id: Uint256, 
   uri: felt*, 
   idx: felt,
-  len: felt
+  len: felt 
 ):
-  custom_uri.write(token_id, idx, uri[idx])
-  
-  if idx == (len-1):
+  if idx == len:
     return ()
   else:
+    custom_uri.write(token_id, idx-5, uri[idx])
     return save_token_uri(token_id, uri, idx+1, len)
   end
 end
@@ -405,7 +439,7 @@ func only_manager{
   range_check_ptr
 }(caller: felt):
   let (manager) = l1_manager.read()
-  with_attr error_msg("Only manager contract can call this function"):
+  with_attr error_message("Only manager contract can call this function"):
     assert manager = caller
   end
   return ()
