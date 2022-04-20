@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-// For some reason, my editor errors with npm imports, weird
-import "../../node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "../../node_modules/@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "./IStarknetCore.sol";
 
 /// @notice Handles interactions between L1-L2
