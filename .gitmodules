@@ -1,3 +1,6 @@
 [submodule "mostar/contracts/forge/lib/ds-test"]
 	path = mostar/contracts/forge/lib/ds-test
 	url = https://github.com/dapphub/ds-test
+[submodule "lib/openzeppelin-contracts"]
+	path = lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
