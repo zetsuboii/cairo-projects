@@ -1,22 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
+import "openzeppelin/token/ERC721/ERC721.sol";
+import "openzeppelin/token/ERC721/utils/ERC721Holder.sol";
 import "./IStarknetCore.sol";
+
+error NotOwner();
+error ZeroAddress();
+error NotInitializer();
+error UninitializedOnL2();
+error AlreadyInitialized();
 
 /// @notice Handles interactions between L1-L2
 contract Mostar is ERC721Holder {
-  error NotOwner();
-  error ZeroAddress();
-  error NotInitializer();
-  error UninitializedOnL2();
-  error AlreadyInitialized();
-  
   address public owner;        // Deployer of the contract
   address public initializer;  // Initializes L2 contracts
 
-  IStarknetCore starknetCore;
+  IStarknetCore immutable starknetCore;
   // Function IDs for consuming messages
   uint256 constant SEND_BACK = 368166277;
   // Function selectors for sending messages
@@ -30,10 +30,10 @@ contract Mostar is ERC721Holder {
   // ERC721 address => tokenId => old owner
   mapping (IERC721 => mapping(uint256 => address)) public owners721;
 
-  constructor() {
+  constructor(IStarknetCore starknetCoreAddress) {
     owner = msg.sender;
     initializer = msg.sender;
-    starknetCore = IStarknetCore(0xde29d060D45901Fb19ED6C6e959EB22d8626708e);
+    starknetCore = IStarknetCore(starknetCoreAddress);
   }
 
   modifier onlyOwner {
@@ -69,7 +69,7 @@ contract Mostar is ERC721Holder {
     uint256[] memory initPayload = new uint256[](3);
     initPayload[0] = _stringToUint(tokenAddress.name());
     initPayload[1] = _stringToUint(tokenAddress.symbol());
-    initPayload[2] = uint256(uint160(address(this)));
+    initPayload[2] = uint256(uint160(address(tokenAddress)));
 
     // Call L2 so that contract is initialized
     starknetCore.sendMessageToL2(
@@ -105,7 +105,7 @@ contract Mostar is ERC721Holder {
 
     // Prepare the payload
     uint256[] memory registerPayload = new uint256[](4 + stringArrLen);
-    registerPayload[0] = uint256(uint160(l2UserAddress));   // l2addr
+    registerPayload[0] = l2UserAddress;                     // l2addr
     registerPayload[1] = tokenId % (2**128);                // token_id_low
     registerPayload[2] = tokenId / (2**128);                // token_id_high
     registerPayload[3] = stringArrLen;                       // token_uri_len
@@ -133,7 +133,7 @@ contract Mostar is ERC721Holder {
     rcvPayload[1] = uint256(uint160(address(tokenAddress))); // solidity.
     rcvPayload[2] = tokenId % (2**128);
     rcvPayload[3] = tokenId / (2**128);
-    rcvPayload[4] = uint256(uint160(address(msg.sender)));
+    rcvPayload[4] = uint256(uint160(msg.sender));
 
     starknetCore.consumeMessageFromL2(initialized721[tokenAddress], rcvPayload);
 
