@@ -178,6 +178,57 @@ func get_l1_manager{
   return l1_manager.read()
 end
 
+# Returns custom URI for a token id
+@view 
+@raw_output
+func get_custom_uri{
+  syscall_ptr: felt*,
+  pedersen_ptr: HashBuiltin*,
+  range_check_ptr
+}(token_id: Uint256) -> (retdata_size: felt, retdata: felt*):
+  alloc_locals
+  let (local custom_uri_len_: felt) = custom_uri_len.read(token_id)
+  let (local custom_uri_: felt*) = alloc()
+
+  _fill_uri(
+    idx=0, 
+    len=custom_uri_len_, 
+    arr=custom_uri_, 
+    token_id=token_id
+  )
+
+  return (
+    retdata_size=custom_uri_len_,
+    retdata=custom_uri_
+  )
+end
+
+# Fills custom uri felt* recursively
+func _fill_uri{
+  syscall_ptr: felt*,
+  pedersen_ptr: HashBuiltin*,
+  range_check_ptr
+}(
+  idx: felt, 
+  len: felt,
+  arr: felt*,
+  token_id: Uint256
+):
+  if idx == len:
+    return ()
+  end
+
+  # Read the next part of the URI
+  let (next_uri_word: felt) = custom_uri.read(token_id, idx) 
+  
+  # arr[idx] = next_uri_word would error
+  assert arr[idx] = next_uri_word
+
+  # Fill the array LTR
+  _fill_uri(idx=idx+1, len=len, arr=arr, token_id=token_id)
+  return ()
+end
+
 #	███████╗██╗  ██╗████████╗███████╗██████╗ ███╗   ██╗ █████╗ ██╗     
 #	██╔════╝╚██╗██╔╝╚══██╔══╝██╔════╝██╔══██╗████╗  ██║██╔══██╗██║     
 #	█████╗   ╚███╔╝    ██║   █████╗  ██████╔╝██╔██╗ ██║███████║██║     
